@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+
+# Secrets and local configuration.
+#
+# `.env.*` matters as much as `.env`: the bare rule let .env.local,
+# .env.production and .env.azure through untouched. The *.example files are
+# the templates other people copy, so they are un-ignored again below --
+# order matters, a negation only works after the rule that caught it.
+.env
+.env.*
+deploy/.env
+!.env.example
+!deploy/.env.example
+
+# Local databases.
+#
+# backend/sdoc.db had grown to 11MB holding full email bodies and review
+# notes. .dockerignore already excluded it; .gitignore did not, and the two
+# disagreeing is how it went unnoticed.
+*.db
+
+# Generated output
+submission.json
+detail.json
+
+# The hackathon dataset.
+#
+# It is the organisers' to distribute, not ours, and it is 773 files of
+# someone else's material. See "Getting the dataset" in README.md for where
+# to unpack it for a local run.
+data/
+
+# Internal deployment notes: live resource names and incident history,
+# useful to us and not meant for a public repo. The file stays on disk.
+HANDOFF.md
+
+# OS noise
+.DS_Store
+Thumbs.db

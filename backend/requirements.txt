@@ -1,0 +1,18 @@
+fastapi>=0.110,<1.0
+uvicorn[standard]>=0.27,<1.0
+sqlalchemy>=2.0,<3.0
+psycopg[binary]>=3.1,<4.0
+alembic>=1.13,<2.0
+pydantic-settings>=2.2,<3.0
+python-multipart>=0.0.9
+firebase-admin>=6.5,<7.0
+google-generativeai>=0.5
+# document extraction
+pdfplumber>=0.11          # text-layer PDFs; also rasterises scans via pypdfium2
+python-docx>=1.1
+openpyxl>=3.1
+# OCR for scanned pages. Local ONNX models -- no system binary, no API key,
+# works offline. Swap for a vision LLM by replacing ocr.ENGINE.
+rapidocr-onnxruntime>=1.3
+numpy>=1.26
+pytest>=8.0

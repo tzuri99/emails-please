@@ -1,0 +1,61 @@
+name: Deploy to Azure
+
+# Manual by default. Shipping on every push to main is a decision the team
+# should make deliberately, so the push trigger is left commented out rather
+# than enabled by assumption.
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+
+env:
+  RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+  ACR_NAME: ${{ vars.AZURE_ACR_NAME }}
+  ACA_ENV: ${{ vars.AZURE_ACA_ENV }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Environment protection rules (required reviewers, secrets scoping) are
+    # configured on the repo, not here.
+    environment: production
+    permissions:
+      id-token: write        # OIDC federation -- no long-lived credentials
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sign in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build images in ACR
+        run: |
+          TAG="${GITHUB_SHA::7}"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          az acr build --registry "$ACR_NAME" --image "sdoc-api:$TAG" ./backend
+          az acr build --registry "$ACR_NAME" --image "sdoc-web:$TAG" ./frontend
+
+      - name: Deploy API
+        run: |
+          az containerapp update \
+            --name sdoc-api --resource-group "$RESOURCE_GROUP" \
+            --image "${ACR_NAME}.azurecr.io/sdoc-api:${TAG}"
+
+      - name: Deploy web
+        run: |
+          az containerapp update \
+            --name sdoc-web --resource-group "$RESOURCE_GROUP" \
+            --image "${ACR_NAME}.azurecr.io/sdoc-web:${TAG}"
+
+      - name: Report the URL
+        run: |
+          FQDN=$(az containerapp show --name sdoc-web \
+            --resource-group "$RESOURCE_GROUP" \
+            --query properties.configuration.ingress.fqdn -o tsv)
+          echo "### Deployed" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://$FQDN" >> "$GITHUB_STEP_SUMMARY"

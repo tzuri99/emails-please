@@ -1,0 +1,28 @@
+# Ensure BACKEND_URL is always defined before envsubst runs.
+#
+# Without it, envsubst leaves the literal ${BACKEND_URL} in the rendered
+# config and nginx dies at startup with:
+#
+#     [emerg] unknown "backend_url" variable
+#
+# which names neither the environment variable nor the file, and sends you
+# looking for an nginx problem rather than a missing deploy setting. The
+# container then crash-loops with no usable diagnosis.
+#
+# `.envsh`, not `.sh`: the nginx entrypoint SOURCES .envsh files and only
+# LAUNCHES .sh files in a subshell, so an export from a .sh would not reach
+# the envsubst step.
+#
+# The default is the Container Apps in-environment name for the API, which
+# resolves for apps sharing an environment. It is a safety net, not a
+# configuration: the deploy sets BACKEND_URL explicitly to the API's real
+# internal FQDN, and Compose overrides it with the service name.
+
+if [ -z "${BACKEND_URL:-}" ]; then
+    export BACKEND_URL="http://sdoc-api"
+    echo "05-default-backend-url.envsh: WARNING BACKEND_URL was not set."
+    echo "05-default-backend-url.envsh: falling back to ${BACKEND_URL} --" \
+         "set it explicitly if the API is reachable elsewhere."
+else
+    echo "05-default-backend-url.envsh: proxying /api to ${BACKEND_URL}"
+fi

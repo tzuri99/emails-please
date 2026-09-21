@@ -1,0 +1,43 @@
+# Local development stack. Mirrors the Azure topology (App Service + Azure
+# Database for PostgreSQL) so the same image ships to both.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: sdoc
+      POSTGRES_PASSWORD: sdoc
+      POSTGRES_DB: sdoc
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sdoc"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build:
+      # Root context so the image can include data/ alongside the app.
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://sdoc:sdoc@db:5432/sdoc
+      DATA_SOURCE: /data
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-}
+    volumes:
+      - ./data:/data:ro           # the hackathon bundle, read-only
+      - ./backend/app:/srv/app    # hot reload in dev
+    ports: ["8000:8000"]
+    depends_on:
+      db: {condition: service_healthy}
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  web:
+    build: ./frontend
+    environment:
+      BACKEND_URL: http://api:8000
+    ports: ["5173:80"]
+    depends_on: [api]
+
+volumes:
+  pgdata:
