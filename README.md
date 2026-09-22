@@ -4,9 +4,7 @@ Reads a shipping operations inbox, compares each Shipping Instruction against
 its draft Bill of Lading, and escalates what it cannot honestly decide.
 
 **[Live demo](https://sdoc-web.bluegrass-42d42f8e.southeastasia.azurecontainerapps.io)**
- · **[Demo video](VIDEO_LINK)**
-
-![The triage console: queue, field-by-field comparison, and decision panel](docs/screenshot.png)
+ · **[Demo video](https://drive.google.com/file/d/1on-DhmtKGpbvGaiBRxXxTtypJLOTd4xF/view?usp=sharing)**
 
 ---
 
